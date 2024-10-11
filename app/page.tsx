@@ -1,27 +1,64 @@
-import { Card, CardBody, CardHeader } from "@nextui-org/card";
-import { Image } from "@nextui-org/image";
 import { Divider } from "@nextui-org/divider";
+import { Spacer } from "@nextui-org/spacer";
+
+import ScheduledCard from "@/components/ScheduledCard";
+import ViewSwitcher from "@/components/ViewSwitcher";
 
 export default function Home() {
+  const someDummyData = [
+    {
+      videoTitle: "Video Title 1",
+      dateScheduled: new Date().toDateString(),
+      videoDescription: "Video 1 Description",
+      scheduledBy: "Demi Daniel",
+      videoThumbnail: "https://picsum.photos/200/300",
+    },
+    {
+      videoTitle: "Video Title 2",
+      dateScheduled: new Date().toDateString(),
+      videoDescription: "Video 2 Description",
+      scheduledBy: "Demi Daniel",
+      videoThumbnail: "https://picsum.photos/200/300",
+    },
+    {
+      videoTitle: "Video Title 3",
+      dateScheduled: new Date().toDateString(),
+      videoDescription: "Video 3 Description",
+      scheduledBy: "Demi Daniel",
+      videoThumbnail: "https://picsum.photos/200/300",
+    },
+    {
+      videoTitle: "Video Title 4",
+      dateScheduled: new Date().toDateString(),
+      videoDescription: "Video 4 Description",
+      scheduledBy: "Demi Daniel",
+      videoThumbnail: "https://picsum.photos/200/300",
+    },
+    {
+      videoTitle: "Video Title 5",
+      dateScheduled: new Date().toDateString(),
+      videoDescription: "Video 5 Description",
+      scheduledBy: "Demi Daniel",
+      videoThumbnail: "https://picsum.photos/200/300",
+    },
+  ];
+
   return (
     <>
-      <Card className="grid grid-cols-2 h-60">
-        <Image
-          className=" items-center align-middle border size-60"
-          src="https://picsum.photos/200/300"
+      <ViewSwitcher />
+      <Spacer y={4} />
+      <h2 className="text-2xl font-semibold">{new Date().toDateString()}</h2>
+      <Divider className="w-[25%]" />
+      {someDummyData.map((data, index) => (
+        <ScheduledCard
+          key={data.videoTitle + index}
+          dateScheduled={data.dateScheduled}
+          scheduledBy={data.scheduledBy}
+          videoDescription={data.videoDescription}
+          videoThumbnail={data.videoThumbnail}
+          videoTitle={data.videoTitle}
         />
-        <div className="flex-row items-center text-center border h-60">
-          <CardHeader>
-            <h1 className="text-5xl">Video Title</h1>
-          </CardHeader>
-          <Divider />
-          <CardBody>
-            <p>Scheduled For:</p>
-            <p>Video Description:</p>
-            <p>Description:</p>
-          </CardBody>
-        </div>
-      </Card>
+      ))}
     </>
   );
 }
