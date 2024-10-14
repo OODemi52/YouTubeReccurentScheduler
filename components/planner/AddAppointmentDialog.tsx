@@ -1,23 +1,30 @@
 "use client";
 
-import React, { useEffect, useRef, useState, useTransition } from "react";
+import React, { useState, useTransition } from "react";
 import { format } from "date-fns";
 import { toast } from "sonner";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import { CalendarIcon } from "lucide-react";
-
-import { Button } from "../ui/button";
-import { Input } from "../ui/input";
-import { Popover, PopoverContent, PopoverTrigger } from "../ui/popover";
-import { TimePicker } from "../ui/time-picker";
-import { Calendar } from "../ui/calendar";
+import { CalendarDaysIcon } from "@heroicons/react/24/outline";
+import { Button } from "@nextui-org/button";
+import { Input, Textarea } from "@nextui-org/input";
+import { Popover, PopoverContent, PopoverTrigger } from "@nextui-org/popover";
+import { Calendar } from "@nextui-org/calendar";
+import {
+  Modal,
+  ModalContent,
+  ModalHeader,
+  ModalBody,
+  ModalFooter,
+  useDisclosure,
+} from "@nextui-org/modal";
+import { parseDate, now } from "@internationalized/date";
+import { DatePicker } from "@nextui-org/date-picker";
+import { Select, SelectItem } from "@nextui-org/select";
 
 import {
   Form,
-  FormControl,
-  FormDescription,
   FormField,
   FormItem,
   FormLabel,
@@ -28,35 +35,18 @@ import {
   createAppointmentSchema,
 } from "@/models/Appointment";
 import { useData } from "@/contexts/PlannerDataContext";
-import {
-  Dialog,
-  DialogClose,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from "@/components/ui/dialog";
 import { cn } from "@/lib/utils";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 
 const AddAppointmentDialog: React.FC = () => {
   const { addAppointment, resources } = useData();
   const [isOpened, setIsOpened] = useState(false);
   const [isPending, startAddAppointmentTransition] = useTransition();
+  const { isOpen, onOpen, onOpenChange } = useDisclosure();
   const form = useForm<AppointmentType>({
     resolver: zodResolver(createAppointmentSchema),
     defaultValues: {
       title: "",
       start: new Date(),
-      end: new Date(new Date().getTime() + 60 * 60 * 1000),
       resourceId: "",
     },
   });
@@ -71,7 +61,6 @@ const AddAppointmentDialog: React.FC = () => {
       id: id,
       title: values.title,
       start: values.start,
-      end: values.end,
       resourceId: values.resourceId,
     };
 
@@ -82,9 +71,9 @@ const AddAppointmentDialog: React.FC = () => {
             resolve(addAppointment(newAppointment));
           }),
         {
-          loading: "Adding appointment",
-          success: "Appointment added",
-          error: "Failed to add appointment",
+          loading: "Adding appointment...",
+          success: "Appointment addedl.",
+          error: "Failed to add appointment.",
         },
       );
       form.reset();
@@ -95,158 +84,138 @@ const AddAppointmentDialog: React.FC = () => {
   }
 
   return (
-    <Dialog open={isOpened} onOpenChange={setIsOpened}>
-      <DialogTrigger asChild>
-        <Button variant="outline">Add Appointment</Button>
-      </DialogTrigger>
-      <DialogContent>
-        <DialogHeader>
-          <DialogTitle>Add Appointment</DialogTitle>
-        </DialogHeader>
-        <Form {...form}>
-          <form className="space-y-8" onSubmit={form.handleSubmit(onSubmit)}>
-            <FormField
-              control={form.control}
-              name="title"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Title</FormLabel>
-                  <FormControl>
-                    <Input placeholder="Appointment title" {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            <FormField
-              control={form.control}
-              name="start"
-              render={({ field }) => (
-                <FormItem className="flex flex-col">
-                  <FormLabel className="text-left">Start</FormLabel>
-                  <Popover>
-                    <FormControl>
-                      <PopoverTrigger asChild>
-                        <Button
-                          className={cn(
-                            "w-[280px] justify-start text-left font-normal",
-                            !field.value && "text-muted-foreground",
-                          )}
-                          variant="outline"
-                        >
-                          <CalendarIcon className="mr-2 h-4 w-4" />
-                          {field.value ? (
-                            format(field.value, "PPP HH:mm:ss")
-                          ) : (
-                            <span>Pick a date</span>
-                          )}
-                        </Button>
-                      </PopoverTrigger>
-                    </FormControl>
-                    <FormMessage />
-                    <PopoverContent className="w-auto p-0">
-                      <Calendar
-                        initialFocus
-                        mode="single"
-                        selected={field.value}
-                        onSelect={field.onChange}
+    <>
+      <Button onPress={onOpen}>Schedule Stream</Button>
+      <Modal backdrop="blur" isOpen={isOpen} onOpenChange={onOpenChange}>
+        <ModalContent>
+          <ModalHeader>
+            <h1>Schedule Stream</h1>
+          </ModalHeader>
+          <Form {...form}>
+            <form className="space-y-8" onSubmit={form.handleSubmit(onSubmit)}>
+              <ModalBody>
+                <FormField
+                  control={form.control}
+                  name="title"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Stream Title</FormLabel>
+                      <Input placeholder="Appointment title" {...field} />
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control}
+                  name="details.description"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Stream Description</FormLabel>
+                      <Textarea
+                        label="Description"
+                        placeholder="Enter stream description here..."
+                        {...field}
                       />
-                      <div className="border-t border-border p-3">
-                        <TimePicker
-                          date={field.value}
-                          setDate={field.onChange}
-                        />
-                      </div>
-                    </PopoverContent>
-                  </Popover>
-                </FormItem>
-              )}
-            />
-            <FormField
-              control={form.control}
-              name="end"
-              render={({ field }) => (
-                <FormItem className="flex flex-col">
-                  <FormLabel className="text-left">End</FormLabel>
-                  <Popover>
-                    <FormControl>
-                      <PopoverTrigger asChild>
-                        <Button
-                          className={cn(
-                            "w-[280px] justify-start text-left font-normal",
-                            !field.value && "text-muted-foreground",
-                          )}
-                          variant="outline"
-                        >
-                          <CalendarIcon className="mr-2 h-4 w-4" />
-                          {field.value ? (
-                            format(field.value, "PPP HH:mm:ss")
-                          ) : (
-                            <span>Pick a date</span>
-                          )}
-                        </Button>
-                      </PopoverTrigger>
-                    </FormControl>
-                    <PopoverContent className="w-auto p-0">
-                      <Calendar
-                        initialFocus
-                        mode="single"
-                        selected={field.value}
-                        onSelect={field.onChange}
-                      />
-                      <div className="border-t border-border p-3">
-                        <TimePicker
-                          date={field.value}
-                          setDate={field.onChange}
-                        />
-                      </div>
-                    </PopoverContent>
-                  </Popover>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            <FormField
-              control={form.control}
-              name="resourceId"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Resource</FormLabel>
-                  <FormControl>
-                    <Select
-                      defaultValue={field.value}
-                      onValueChange={field.onChange}
-                    >
-                      <SelectTrigger>
-                        <SelectValue>
-                          {field.value
-                            ? resources.find(
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control}
+                  name="start"
+                  render={({ field }) => (
+                    <FormItem className="flex flex-col">
+                      <FormLabel className="text-left">Start</FormLabel>
+                      <Popover>
+                        <PopoverTrigger>
+                          <Button
+                            className={cn(
+                              "w-[280px] justify-start text-left font-normal",
+                              !field.value && "text-muted-foreground",
+                            )}
+                            variant="faded"
+                          >
+                            <CalendarDaysIcon className="mr-2 h-4 w-4" />
+                            {field.value ? (
+                              format(field.value, "PPP HH:mm:ss")
+                            ) : (
+                              <span>Pick a date</span>
+                            )}
+                          </Button>
+                        </PopoverTrigger>
+                        <FormMessage />
+                        <PopoverContent className="w-auto p-0">
+                          <Calendar
+                            value={
+                              field.value
+                                ? parseDate(
+                                    field.value.toISOString().split("T")[0],
+                                  )
+                                : now("UTC")
+                            }
+                            onChange={(date) => field.onChange(date)}
+                          />
+                          <div className="border-t border-border p-3">
+                            <DatePicker
+                              //granularity="minute"
+                              value={
+                                field.value
+                                  ? parseDate(
+                                      field.value.toISOString().split("T")[0],
+                                    )
+                                  : null
+                              }
+                              onChange={field.onChange}
+                            />
+                          </div>
+                        </PopoverContent>
+                      </Popover>
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control}
+                  name="resourceId"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Resource</FormLabel>
+                      <div>
+                        {field.value && (
+                          <div>
+                            Selected:{" "}
+                            {
+                              resources.find(
                                 (resource) => resource.id === field.value,
                               )?.name
-                            : "Select a resource"}
-                        </SelectValue>
-                      </SelectTrigger>
-                      <SelectContent>
-                        {resources.map((resource) => (
-                          <SelectItem key={resource.id} value={resource.id}>
-                            {resource.name}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
+                            }
+                          </div>
+                        )}
+                        <Select
+                          placeholder="Select A Resource"
+                          value={field.value}
+                          onChange={field.onChange}
+                        >
+                          {resources.map((resource) => (
+                            <SelectItem key={resource.id} value={resource.id}>
+                              {resource.name}
+                            </SelectItem>
+                          ))}
+                        </Select>
+                      </div>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </ModalBody>
 
-            <DialogFooter>
-              <Button type="submit">Save changes</Button>
-            </DialogFooter>
-          </form>
-        </Form>
-      </DialogContent>
-    </Dialog>
+              <ModalFooter>
+                <Button type="submit">Save Stream</Button>
+              </ModalFooter>
+            </form>
+          </Form>
+        </ModalContent>
+      </Modal>
+    </>
   );
 };
 

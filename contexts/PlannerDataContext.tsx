@@ -2,8 +2,10 @@ import React, {
   createContext,
   useContext,
   useState,
+  useMemo,
   ReactNode,
   FC,
+  useEffect,
 } from "react";
 
 import { AppointmentService, ResourceService } from "../services";
@@ -27,44 +29,57 @@ export const PlannerDataContextProvider: FC<{
   initialAppointments: Appointment[];
   initialResources: Resource[];
 }> = ({ children, initialAppointments, initialResources }) => {
-  const appointmentService = useState(
-    new AppointmentService(initialAppointments),
-  )[0];
-  const resourceService = useState(new ResourceService(initialResources))[0];
+  const [appointments, setAppointments] = useState(initialAppointments);
+  const [resources, setResources] = useState(initialResources);
+  const appointmentService = useMemo(
+    () => new AppointmentService(),
+    [], // Removed dependency on appointments
+  );
+  // Updating the state for re-renders
+  const addAppointment = (appointment: Appointment) => {
+    setAppointments((prev) => {
+      const updated = appointmentService.createAppointment(prev, appointment);
+      return updated;
+    });
+  };
 
-  // Create a state that will re-render the context when updated
-  const [trigger, setTrigger] = useState(false);
+  const updateAppointment = (appointment: Appointment) => {
+    setAppointments((prev) => {
+      const updated = appointmentService.updateAppointment(
+        [...prev],
+        appointment,
+      );
+      return updated;
+    });
+  };
 
-  const handleUpdate = () => setTrigger(!trigger); // simple state toggle to trigger re-render
+  const removeAppointment = (id: string) => {
+    setAppointments((prev) => {
+      const updated = appointmentService.deleteAppointment([...prev], id);
+      return updated;
+    });
+  };
 
   const contextValue: DataContextType = {
-    appointments: appointmentService.getAppointments(),
-    resources: resourceService.getResources(),
-    addAppointment: (appointment) => {
-      appointmentService.createAppointment(appointment);
-      handleUpdate();
+    appointments: initialAppointments,
+    resources,
+    addAppointment,
+    updateAppointment,
+    removeAppointment,
+    addResource: function (resource: Resource): void {
+      throw new Error("Function not implemented.");
     },
-    updateAppointment: (appointment) => {
-      appointmentService.updateAppointment(appointment);
-      handleUpdate();
+    updateResource: function (resource: Resource): void {
+      throw new Error("Function not implemented.");
     },
-    removeAppointment: (id) => {
-      appointmentService.deleteAppointment(id);
-      handleUpdate();
-    },
-    addResource: (resource) => {
-      resourceService.addResource(resource);
-      handleUpdate();
-    },
-    updateResource: (resource) => {
-      resourceService.updateResource(resource);
-      handleUpdate();
-    },
-    removeResource: (id) => {
-      resourceService.removeResource(id);
-      handleUpdate();
+    removeResource: function (id: string): void {
+      throw new Error("Function not implemented.");
     },
   };
+
+  useEffect(() => {
+    console.log("New", appointments), console.log("Og", initialAppointments);
+  }, [appointments, initialAppointments]);
 
   return (
     <DataContext.Provider value={contextValue}>{children}</DataContext.Provider>

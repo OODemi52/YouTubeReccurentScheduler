@@ -1,9 +1,7 @@
 import { FC, useEffect, useRef, useState } from "react";
 import { dropTargetForElements } from "@atlaskit/pragmatic-drag-and-drop/element/adapter";
+import { TableCell } from "@nextui-org/table";
 
-import { TableCell } from "../ui/table";
-
-import { Resource } from "@/models";
 import { cn } from "@/lib/utils";
 
 interface DropTableCellProps
@@ -17,10 +15,9 @@ const DropTableCell: FC<DropTableCellProps> = ({
   children,
   resourceId,
   columnIndex,
-
   ...props
 }) => {
-  const ref = useRef<HTMLTableCellElement>(null);
+  const ref = useRef<HTMLDivElement>(null);
   const [isOver, setIsOver] = useState(false);
 
   useEffect(() => {
@@ -28,31 +25,22 @@ const DropTableCell: FC<DropTableCellProps> = ({
 
     return dropTargetForElements({
       element,
-      getData: () => {
-        return { resourceId: resourceId, columnIndex: columnIndex };
-      },
+      getData: () => ({ resourceId, columnIndex }),
       onDragEnter: () => setIsOver(true),
       onDragLeave: () => setIsOver(false),
-      onDrop: () => {
-        setIsOver(false);
-      },
+      onDrop: () => setIsOver(false),
     });
-  }, []);
-  const style = {
-    backgroundColor: isOver ? "#f0f0f0" : "#fff",
-    border: "1px solid #ddd",
-  };
+  }, [resourceId, columnIndex]);
 
   return (
     <TableCell
-      ref={ref}
       className={cn(
         "border bg-background",
         isOver ? "bg-primary-foreground" : "bg-background",
       )}
       {...props}
     >
-      <div className="grid grid-flow-row grid-cols-2 gap-2">{children}</div>
+      {children}
     </TableCell>
   );
 };

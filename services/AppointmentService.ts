@@ -5,6 +5,7 @@ export class AppointmentService {
 
   constructor(initialAppointments: Appointment[]) {
     this.appointments = initialAppointments;
+    console.log("Constructor", this.appointments)
   }
 
   createAppointment(appointment: Appointment) {
@@ -36,6 +37,7 @@ export class AppointmentService {
   }
 
   getAppointments() {
+    console.log("Constructor", this.appointments)
     return [...this.appointments];
   }
 }

@@ -1,7 +1,13 @@
 import React, { FC, useEffect } from "react";
 import { monitorForElements } from "@atlaskit/pragmatic-drag-and-drop/element/adapter";
-
-import { Table, TableBody, TableRow } from "../ui/table";
+import {
+  Table,
+  TableBody,
+  TableRow,
+  TableHeader,
+  TableColumn,
+  TableCell
+} from "@nextui-org/table";
 
 import CalendarToolbar from "./PlannerToolbar";
 import Appointment from "./Appointment";
@@ -46,15 +52,19 @@ const PlannerMainComponent: FC<PlannerMainComponentProps> = ({ ...props }) => {
   return (
     <div className="flex flex-col gap-2  ">
       <CalendarToolbar />
-      <CalendarContent {...props} />
+      <CalendarContent />
     </div>
   );
 };
 
 interface CalendarContentProps extends React.HTMLAttributes<HTMLDivElement> {}
-const CalendarContent: React.FC<CalendarContentProps> = ({ ...props }) => {
+const CalendarContent: React.FC<CalendarContentProps> = () => {
   const { viewMode, dateRange, timeLabels } = useCalendar();
   const { resources, appointments, updateAppointment } = useData();
+
+  useEffect(() => {
+    console.log("From context in planner", appointments);
+  }, [appointments]);
 
   useEffect(() => {
     return monitorForElements({
@@ -82,62 +92,54 @@ const CalendarContent: React.FC<CalendarContentProps> = ({ ...props }) => {
           sourceData.columnIndex as unknown as number,
           {
             from: appointment.start,
-            to: appointment.end,
           },
         );
 
         updateAppointment({
           ...appointment,
           start: newDates.start as Date,
-          end: newDates.end as Date,
           resourceId: newResource.id,
         });
       },
     });
   }, [appointments]);
 
+  const columns = [
+    { key: "id", label: "Appointment ID" },
+    { key: "title", label: "Title" },
+    { key: "start", label: "Start Time" },
+    { key: "resourceId", label: "Resource ID" },
+  ];
+
+  // Define rows based on the appointments
+  const rows = appointments.map((appt) => ({
+    key: appt.id,
+    id: appt.id,
+    title: appt.title,
+    start: appt.start.toString(), // Convert Date to string for display
+    resourceId: appt.resourceId,
+  }));
+
+  // Helper function to get key value
+  const getKeyValue = (item: any, columnKey: string) => {
+    return item[columnKey];
+  };
+
   return (
-    <div className="flex max-h-[calc(80vh_-_theme(spacing.16))] flex-col  ">
-      <div className="calendar-scroll flex-grow overflow-auto">
-        <Table>
-          <Timeline />
-          <TableBody>
-            {resources.map((resource) => (
-              <TableRow key={resource.id}>
-                <ResourceTableCell resourceItem={resource} />
-                {timeLabels?.map((label, index) => (
-                  <DropTableCell
-                    key={index}
-                    columnIndex={index}
-                    resourceId={resource.id}
-                  >
-                    {appointments
-                      .filter(
-                        (appt) =>
-                          filterAppointments(
-                            appt,
-                            index,
-                            dateRange,
-                            viewMode,
-                          ) && appt.resourceId === resource.id,
-                      )
-                      .sort((a, b) => a.start.getTime() - b.start.getTime())
-                      .map((appt) => (
-                        <Appointment
-                          key={appt.id}
-                          appointment={appt}
-                          columnIndex={index}
-                          resourceId={resource.id}
-                        />
-                      ))}
-                  </DropTableCell>
-                ))}
-              </TableRow>
+    <Table aria-label="Example table with dynamic content">
+      <TableHeader columns={columns}>
+        {(column) => <TableColumn className="border-red-900 rounded-lg mx-4" key={column.key}>{column.label}</TableColumn>}
+      </TableHeader>
+      <TableBody items={rows}>
+        {(item) => (
+          <TableRow className="border-red-900 rounded-lg" key={item.key.toString()}>
+            {columns.map((column) => (
+              <TableCell key={column.key}>{getKeyValue(item, column.key)}</TableCell>
             ))}
-          </TableBody>
-        </Table>
-      </div>
-    </div>
+          </TableRow>
+        )}
+      </TableBody>
+    </Table>
   );
 };
 

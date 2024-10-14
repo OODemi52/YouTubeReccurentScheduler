@@ -4,4 +4,4 @@ export interface ScheduledCardProps {
   videoDescription: string;
   scheduledBy: string;
   videoThumbnail: string;
-};
+}

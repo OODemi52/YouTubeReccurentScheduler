@@ -2,42 +2,31 @@
 
 import React, { useEffect, useRef, useState } from "react";
 import { format } from "date-fns";
+import { Button } from "@nextui-org/button";
+import { Popover, PopoverContent, PopoverTrigger } from "@nextui-org/popover";
+import {
+  CalendarDaysIcon,
+  EllipsisVerticalIcon,
+} from "@heroicons/react/24/outline";
+import { draggable } from "@atlaskit/pragmatic-drag-and-drop/element/adapter";
+import { Badge } from "@nextui-org/badge";
+import { useForm } from "react-hook-form";
+import { z } from "zod";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { Input } from "@nextui-org/input";
+import { Calendar } from "@nextui-org/calendar";
+import { Card, CardBody, CardHeader } from "@nextui-org/card";
+import { parseDate, now } from "@internationalized/date";
+import { DatePicker } from "@nextui-org/date-picker";
 
 import {
   Appointment as AppointmentType,
   updateAppointmentSchema,
 } from "@/models/Appointment";
 import { useData } from "@/contexts/PlannerDataContext";
-import { Button } from "../ui/button";
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "@/components/ui/popover";
-import { CalendarIcon, EllipsisVertical } from "lucide-react";
-import { draggable } from "@atlaskit/pragmatic-drag-and-drop/element/adapter";
-
 import { cn } from "@/lib/utils";
-import { Badge } from "../ui/badge";
-import { useForm } from "react-hook-form";
-import { z } from "zod";
-import { zodResolver } from "@hookform/resolvers/zod";
-
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "../ui/card";
-import { Input } from "../ui/input";
-import { Calendar } from "../ui/calendar";
-import { TimePicker } from "../ui/time-picker";
-
 import {
   Form,
-  FormControl,
-  FormDescription,
   FormField,
   FormItem,
   FormLabel,
@@ -79,7 +68,6 @@ const Appointment: React.FC<AppointmentProps> = ({
     defaultValues: {
       title: appointment.title,
       start: new Date(appointment.start) ?? new Date(),
-      end: new Date(appointment.end) ?? new Date(),
     },
   });
 
@@ -93,25 +81,24 @@ const Appointment: React.FC<AppointmentProps> = ({
   return (
     <Card ref={ref} className="hover:cursor-grab">
       <CardHeader className="flex flex-row items-center justify-between p-1">
-        <Badge className="  truncate pl-2 text-xs" variant={"outline"}>
+        <Badge className="  truncate pl-2 text-xs" variant="faded">
           {appointment.details.service}
         </Badge>
-        <Popover>
+        <Popover backdrop="blur">
           <PopoverTrigger>
             <div className=" text-xs">
-              <EllipsisVertical className="h-4 w-4" />
+              <EllipsisVerticalIcon className="h-4 w-4" />
             </div>
           </PopoverTrigger>
           <PopoverContent className="w-fit">
             <Card className="border-none p-0 shadow-none w-fit">
               <CardHeader className="p-0">
-                <CardTitle className="text-xs">{appointment.title}</CardTitle>
-                <CardDescription className="text-xs">
+                <h3 className="text-xs">{appointment.title}</h3>
+                <p className="text-xs">
                   {format(new Date(appointment.start), "MMM dd yyyy HH:mm")} -{" "}
-                  {format(new Date(appointment.end), "MMM dd yyyy HH:mm")}
-                </CardDescription>
+                </p>
               </CardHeader>
-              <CardContent className="w-fit">
+              <CardBody className="w-fit">
                 <Form {...form}>
                   <form
                     className="space-y-8"
@@ -123,9 +110,7 @@ const Appointment: React.FC<AppointmentProps> = ({
                       render={({ field }) => (
                         <FormItem>
                           <FormLabel>Title</FormLabel>
-                          <FormControl>
-                            <Input placeholder="Title" {...field} />
-                          </FormControl>
+                          <Input placeholder="Title" {...field} />
                           <FormMessage />
                         </FormItem>
                       )}
@@ -137,78 +122,45 @@ const Appointment: React.FC<AppointmentProps> = ({
                         <FormItem className="flex flex-col">
                           <FormLabel className="text-left">Start</FormLabel>
                           <Popover>
-                            <FormControl>
-                              <PopoverTrigger asChild>
-                                <Button
-                                  className={cn(
-                                    "w-[280px] justify-start text-left font-normal",
-                                    !field.value && "text-muted-foreground",
-                                  )}
-                                  variant="outline"
-                                >
-                                  <CalendarIcon className="mr-2 h-4 w-4" />
-                                  {field.value ? (
-                                    format(field.value, "PPP HH:mm:ss")
-                                  ) : (
-                                    <span>Pick a date</span>
-                                  )}
-                                </Button>
-                              </PopoverTrigger>
-                            </FormControl>
+                            <PopoverTrigger>
+                              <Button
+                                className={cn(
+                                  "w-[280px] justify-start text-left font-normal",
+                                  !field.value && "text-muted-foreground",
+                                )}
+                                variant="faded"
+                              >
+                                <CalendarDaysIcon className="mr-2 h-4 w-4" />
+                                {field.value ? (
+                                  format(field.value, "PPP HH:mm:ss")
+                                ) : (
+                                  <span>Pick a date</span>
+                                )}
+                              </Button>
+                            </PopoverTrigger>
                             <PopoverContent className="w-auto p-0">
                               <Calendar
-                                initialFocus
-                                mode="single"
-                                selected={field.value}
-                                onSelect={field.onChange}
+                                value={
+                                  field.value
+                                    ? parseDate(
+                                        field.value.toISOString().split("T")[0],
+                                      )
+                                    : now("UTC")
+                                }
+                                onChange={(date) => field.onChange(date)}
                               />
                               <div className="border-t border-border p-3">
-                                <TimePicker
-                                  date={field.value}
-                                  setDate={field.onChange}
-                                />
-                              </div>
-                            </PopoverContent>
-                          </Popover>
-                        </FormItem>
-                      )}
-                    />
-                    <FormField
-                      control={form.control}
-                      name="end"
-                      render={({ field }) => (
-                        <FormItem className="flex flex-col">
-                          <FormLabel className="text-left">End</FormLabel>
-                          <Popover>
-                            <FormControl>
-                              <PopoverTrigger asChild>
-                                <Button
-                                  className={cn(
-                                    "w-[280px] justify-start text-left font-normal",
-                                    !field.value && "text-muted-foreground",
-                                  )}
-                                  variant="outline"
-                                >
-                                  <CalendarIcon className="mr-2 h-4 w-4" />
-                                  {field.value ? (
-                                    format(field.value, "PPP HH:mm:ss")
-                                  ) : (
-                                    <span>Pick a date</span>
-                                  )}
-                                </Button>
-                              </PopoverTrigger>
-                            </FormControl>
-                            <PopoverContent className="w-auto p-0">
-                              <Calendar
-                                initialFocus
-                                mode="single"
-                                selected={field.value}
-                                onSelect={field.onChange}
-                              />
-                              <div className="border-t border-border p-3">
-                                <TimePicker
-                                  date={field.value}
-                                  setDate={field.onChange}
+                                <DatePicker
+                                  value={
+                                    field.value
+                                      ? parseDate(
+                                          field.value
+                                            .toISOString()
+                                            .split("T")[0],
+                                        )
+                                      : null
+                                  }
+                                  onChange={field.onChange}
                                 />
                               </div>
                             </PopoverContent>
@@ -219,24 +171,21 @@ const Appointment: React.FC<AppointmentProps> = ({
                     <Button type="submit">Submit</Button>
                   </form>
                 </Form>
-              </CardContent>
+              </CardBody>
             </Card>
           </PopoverContent>
         </Popover>
       </CardHeader>
-      <CardContent
+      <CardBody
         className={cn("px-2 py-2", {
           "cursor-grabbing bg-muted opacity-50": isDragging,
         })}
       >
         <div className="flex flex-col items-center gap-2 text-xs">
           <div>{appointment.title}</div>
-          <div>
-            {format(new Date(appointment.start), "kk:mm")} -{" "}
-            {format(new Date(appointment.end), "kk:mm")}
-          </div>
+          <div>{format(new Date(appointment.start), "kk:mm")} - </div>
         </div>
-      </CardContent>
+      </CardBody>
     </Card>
   );
 };

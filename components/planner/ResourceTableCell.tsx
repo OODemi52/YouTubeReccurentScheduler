@@ -1,10 +1,6 @@
-import React, { FC, useState } from "react";
+import React from "react";
+import { TableCell } from "@nextui-org/table";
 
-import { Button } from "../ui/button";
-import { Input } from "../ui/input";
-import { TableCell } from "../ui/table";
-
-import { useData } from "@/contexts/PlannerDataContext";
 import { Resource } from "@/models";
 import { cn } from "@/lib/utils";
 
@@ -13,7 +9,7 @@ export interface ResourceTableCellProps
   resourceItem: Resource;
 }
 
-const ResourceTableCell: FC<ResourceTableCellProps> = ({
+const ResourceTableCell: React.FC<ResourceTableCellProps> = ({
   className,
   resourceItem,
   ...props

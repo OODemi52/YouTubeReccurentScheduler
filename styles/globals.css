@@ -2,8 +2,6 @@
 @tailwind components;
 @tailwind utilities;
 
-
-/* Scrollbar customization for calendar components */
 .calendar-scroll::-webkit-scrollbar {
     width: 8px;
     scrollbar-width: thin;

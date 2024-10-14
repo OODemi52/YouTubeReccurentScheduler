@@ -1,29 +1,29 @@
 import React from "react";
-
-import { TableHead, TableHeader, TableRow } from "../ui/table";
+import { TableColumn, TableHeader, TableRow } from "@nextui-org/table";
 
 import { useCalendar } from "@/contexts/PlannerContext";
 import { cn } from "@/lib/utils";
 
 export const Timeline: React.FC<React.HTMLAttributes<HTMLDivElement>> = ({
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   className,
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   ...props
 }) => {
   const { timeLabels } = useCalendar();
- 
+
   return (
     <TableHeader>
       <TableRow className="bg-background">
-        <TableHead ></TableHead>
         {timeLabels.map((label, index) => (
-          <TableHead
+          <TableColumn
             key={index}
             className={cn(
               "sticky top-0 z-10 bg-background border-x min-w-56 text-center lg:min-w-72 ",
             )}
           >
             {label}
-          </TableHead>
+          </TableColumn>
         ))}
       </TableRow>
     </TableHeader>
